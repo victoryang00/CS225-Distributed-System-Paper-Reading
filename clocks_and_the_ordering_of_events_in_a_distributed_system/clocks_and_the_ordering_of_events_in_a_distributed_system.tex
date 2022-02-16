@@ -127,12 +127,12 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-  The paper presents a fundemantal concept for the ordering of an event in a distributed system.
+  The paper \cite{lamport2019time} presents a fundamental concept for the ordering of an event in a distributed system.
   And once we have the formal definition of ordering, how we can use it to solve synchronization
   problems. Happens before, or partial ordering of events without precise physical time in the system
-  is the assurance of Lamport Clock to be defined. In distributed mutual exclution, the must release
-  granted resource before can be granted again, thhey should grant resources in order they are made, and
-  every rquest should be eventually granted, assuming the process will not fail. A naive implementation of
+  is the assurance of Lamport Clock to be defined. In distributed mutual exclusion, the must release
+  granted resource before can be granted again, they should grant resources in order they are made, and
+  every request should be eventually granted, assuming the process will not fail. A naive implementation of
   Lamport Clock is vector clock to store all nodes' time as vector. Eventually, it formally defined physical clocks
   with distributed implementation. Based on that, the example of Network Time Protocol is introduced.
 \end{abstract}
@@ -156,10 +156,8 @@
   </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Computer systems organization~Embedded systems}
-\ccsdesc[300]{Computer systems organization~Redundancy}
-\ccsdesc{Computer systems organization~Robotics}
-\ccsdesc[100]{Networks~Network reliability}
+\ccsdesc[500]{Distributed System~Lamport clocks}
+\ccsdesc[500]{Distributed System~Network Time Protocol}
 
 %%
 %% Keywords. The author(s) should pick words that accurately describe
@@ -177,11 +175,12 @@
 
 \subsection {The author defined \texttt{Ordering} and \texttt{Clock}}
 \subsubsection{\texttt{Total Ordering} and \texttt{Partial Ordering}}
-The author specify the sequentrial consistency(every core sees same read/write order), and Release consistency(every core sees write in unlock order)
-Happened before, which is the partial consistency, means the smalles relation satisfying:
+The author specify the sequential consistency (every core sees same read or write order),
+and Release consistency (every core sees write in unlock order)
+Happened before, which is the partial consistency, means the small relation satisfying:
 \begin{itemize}
   \item Either one event on the same process is ordered.
-  \item Messege ordered after associated message sends.
+  \item Message ordered after associated message sends.
   \item As shown in the left graph down below, we can conclude the
         transitivity that $a \rightarrow b$ and $b \rightarrow c$ implies $a \rightarrow c$
 \end{itemize}
@@ -209,7 +208,7 @@ and time is the logical time:
     Wavy arrows are messages. A dot is an event. Time elapses bottom up.}
 \end{figure}
 
-The definiation of happened before actually break the convention that the
+The definition of happened before actually break the convention that the
 system must have physical clocks every node for keeping precise physical
 time which may have clock skewing problems.
 
@@ -256,7 +255,7 @@ func (state *LamportLockState) processMessage(m Message) {        } else if m.Ty
   \includegraphics[width=0.5\linewidth]{vec_lock.png}
   \caption{$\mathbf{V}<\mathbf{V}^{\prime}$ if $\leq$ on each element and $<$ on at least one element}
 \end{figure}
-We have problem that the system will halt if one process fails. To Generalize, all the workers for any synchronization taht can be specified in terms of a State Machine
+We have problem that the system will halt if one process fails. To Generalize, all the workers for any synchronization that can be specified in terms of a State Machine
 The main problem in totally ordering events is that two or more events at different processes may have identical timestamp, which can be resolved by identical process id.
 
 In the system of vector clocks, the time domain is represented by a set of $n$-dimensional nonnegative integer vectors. Each process $p_{i}$ maintains a vector $v t_{i}[1 . . n]$, where $v t_{i}[i]$ is the local logical clock of $p_{i}$ and describes the logical time progress at process $p_{i} . v t_{i}[j]$ represents process $p_{i}$ 's latest knowledge of process $p_{j}$ local time. If $v t_{i}[j]=x$, then process $p_{i}$ knows that local time at process $p_{j}$ has progressed till $x$. The entire vector $v t_{i}$ constitutes $p_{i}$ 's view of the global logical time and is used to timestamp events.
@@ -298,8 +297,8 @@ func (state *LamportLockState) allProcessesSeen(time int) bool {       func (sta
                                                                		return false}
 \end{lstlisting}
 
-In function Aqcuire(), we just have to check whether it haveLock() to get the lock to prevent other process to enter the mutual exclusion.
-\subsection{We can use pyhical clock to implement Network Time Protocol}
+In function Acquire(), we just have to check whether it haveLock() to get the lock to prevent other process to enter the mutual exclusion.
+\subsection{We can use physical clock to implement Network Time Protocol}
 Assume that clocks $A$ and $B$ are stable and running at the same speed. Let $a=T_{1}-T_{3}$ and $b=T_{2}-T_{4}$. If the network delay difference from $A$ to $B$ and from $B$ to $A$, called differential delay, is small, the clock offset $\theta$ and roundtrip delay $\delta$ of $B$ relative to $A$ at time $T_{4}$ are approximately given by $\theta=\frac{a+b}{2}, \quad \delta=a-b$.
 \begin{figure}[h]
   \centering
@@ -308,20 +307,24 @@ Assume that clocks $A$ and $B$ are stable and running at the same speed. Let $a=
 \end{figure}
 
 \section{Weak Point of the paper}
-\subsection {No strongly software implementable module for programming} To ensure the parcial order, we have
-\subsection{Many concepts are not fully documented at that time} Produces colored hyperlinks.
+\subsection {No strongly provincial performance tests} 
+To ensure the partial order, we have multiple implementations based on the condition and the pseudocode.
 
+\subsection{Many concepts are not fully documented at that time} 
+For example
 
 \section{Possible Refinement to the idea}
 \subsection {More efficient implementation for vector clock}
 
 
 \subsection {Better implementation for fault tolerance}
-In filesystems or databases, we have Redo/Undo Logging or Snapshotting for fault tolerance. In the paper, if one process in the disstributed system is down, the whole system is crash.
+In filesystem or databases, we have Redo/Undo Logging or Sharpshooting for fault tolerance. In the paper, if one process in the disstributed system is down, the whole system is crash.
 
 2PL/MVCC
 
-\subsection{Better implementation for NTP protocol} Produces colored hyperlinks.\cite{HFT-PTP-NTP} %beter NTP portocol
+\subsection{Better implementation for NTP protocol} 
+In High Frequency Trading Firm
+\cite{HFT-PTP-NTP} %beter NTP portocol
 
 
 

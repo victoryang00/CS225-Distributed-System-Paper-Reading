@@ -14,15 +14,15 @@ PDF = $(PACKAGE).pdf
 all:  ${PDF}
 
 
-$(PACKAGE).pdf: $(PACKAGE).tex
-	pdflatex $<
+$(PACKAGE).pdf: 
+	pdflatex $(PACKAGE).tex
 	- bibtex $(PACKAGE)
-	pdflatex $<
+	pdflatex $(PACKAGE).tex
 	- makeindex -s gind.ist -o $*.ind $*.idx
 	- makeindex -s gglo.ist -o $*.gls $*.glo
-	pdflatex $<
+	pdflatex $(PACKAGE).tex
 	while ( grep -q '^LaTeX Warning: Label(s) may have changed' $*.log) \
-	do pdflatex $<; done
+	do pdflatex $(PACKAGE).tex; done
 
 docclean:
 	$(RM)  *.log *.aux \
