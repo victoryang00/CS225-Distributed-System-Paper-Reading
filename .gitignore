@@ -1,0 +1,11 @@
+*.bbl
+*.blg
+*.glo
+*.hd
+*.idx
+*.log
+*.aux
+*.pdf
+*.out
+comment.cut
+.vscode
