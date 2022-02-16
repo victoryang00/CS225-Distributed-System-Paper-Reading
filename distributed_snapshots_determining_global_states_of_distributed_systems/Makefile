@@ -16,7 +16,7 @@ all:  ${PDF}
 
 $(PACKAGE).pdf: $(PACKAGE).tex
 	pdflatex $<
-	- bibtex $*
+	- bibtex $(PACKAGE)
 	pdflatex $<
 	- makeindex -s gind.ist -o $*.ind $*.idx
 	- makeindex -s gglo.ist -o $*.gls $*.glo
@@ -25,7 +25,7 @@ $(PACKAGE).pdf: $(PACKAGE).tex
 	do pdflatex $<; done
 
 docclean:
-	$(RM)  *.log *.aux \bi
+	$(RM)  *.log *.aux \
 	*.cfg *.glo *.idx *.toc \
 	*.ilg *.ind *.out *.lof \
 	*.lot *.bbl *.blg *.gls *.cut *.hd \

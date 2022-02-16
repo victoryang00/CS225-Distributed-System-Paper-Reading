@@ -175,7 +175,8 @@
 \section{Strong Point of the paper}
 
 
-\subsection {\texttt{Ordering}}
+\subsection {The author defined \texttt{Ordering} and \texttt{Clock}}
+\subsubsection{\texttt{Total Ordering} and \texttt{Partial Ordering}}
 The author specify the sequentrial consistency(every core sees same read/write order), and Release consistency(every core sees write in unlock order)
 Happened before, which is the partial consistency, means the smalles relation satisfying:
 \begin{itemize}
@@ -212,7 +213,7 @@ The definiation of happened before actually break the convention that the
 system must have physical clocks every node for keeping precise physical
 time which may have clock skewing problems.
 
-\subsection{Logical(Lamport) Clocks}
+\subsubsection{Logical(Lamport) Clocks}
 The logical clocks can be simply defined by clock condition:
 \begin{itemize}
   \item if $a \rightarrow b$ then Clock $(a)<\operatorname{Clock}(b)$.
@@ -252,15 +253,59 @@ func (state *LamportLockState) processMessage(m Message) {        } else if m.Ty
 \subsection{Vector Clocks}
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{vec_lock.png}
+  \includegraphics[width=0.5\linewidth]{vec_lock.png}
   \caption{$\mathbf{V}<\mathbf{V}^{\prime}$ if $\leq$ on each element and $<$ on at least one element}
 \end{figure}
-We have problem that the system will halt if one process fails. Ti Generize, 
-\subsection{Physical Clocks}
+We have problem that the system will halt if one process fails. To Generalize, all the workers for any synchronization taht can be specified in terms of a State Machine
+The main problem in totally ordering events is that two or more events at different processes may have identical timestamp, which can be resolved by identical process id.
 
-\subsection{Network Time Protocol}
+In the system of vector clocks, the time domain is represented by a set of $n$-dimensional nonnegative integer vectors. Each process $p_{i}$ maintains a vector $v t_{i}[1 . . n]$, where $v t_{i}[i]$ is the local logical clock of $p_{i}$ and describes the logical time progress at process $p_{i} . v t_{i}[j]$ represents process $p_{i}$ 's latest knowledge of process $p_{j}$ local time. If $v t_{i}[j]=x$, then process $p_{i}$ knows that local time at process $p_{j}$ has progressed till $x$. The entire vector $v t_{i}$ constitutes $p_{i}$ 's view of the global logical time and is used to timestamp events.
+Process $p_{i}$ uses the following two rules $R 1$ and $R 2$ to update its clock:
 
+\begin{itemize}
+  \item Before executing an event, process $p_{i}$ updates its local logical time $v t_{i}[i]:=v t_{i}[i]+d \quad(d>0)$.
+  \item $R 2:$ Each message $m$ is piggybacked with the vector clock $v t$ of the sender process at sending time. On the receipt of such a message $(m, v t)$, process $p_{i}$ executes the following sequence of Update the global logical time $v t_{i}[k]:=\max \left(v t_{i}[k], v t[k]\right)$, executes the first step and deliver the message $m$.
+\end{itemize}
+\subsubsection{Physical Clocks}
+Physical clocks are synchronized to an accurate real-time standard like UTC. Let $C_{i}(t)$ denote the reading of clock $C_{i}$ at physical time $t$. Assume $C_{i}(t)$ is a continuous, differentiable function of $t$, except for isolated jump discontinuities where clock is reset. We have 2 properties:
+\begin{itemize}
+  \item There exists constant $\kappa \ll 1$ s.t. for all $i:\left|\frac{d C_{i}(t)}{d t}-1\right|<\kappa$
+  \item For all $i, j:\left|C_{i}(t)-C_{j}(t)\right|<\epsilon$ for small constant $\epsilon$
+\end{itemize}
 
+One distributed implementation can be:
+\begin{itemize}
+  \item If $P_{i}$ does not receive a message at physical time $t$ then $\frac{d C_{i}(t)}{d t}>0$
+  \item $P_{i}$ sends $T_{m}=C_{i}(t)$ along with its message, and upon receiving that message at time $t^{\prime}$,
+        $P_{j}$ sets $C_{j}\left(t^{\prime}\right)=\max \left(\lim _{\delta \rightarrow 0} C_{j}\left(t^{\prime}-|\delta|\right), T_{m}+\mu_{m}\right)$
+\end{itemize}
+
+\subsection{We can Lamport clocks to achieve mutual exclusion}
+With the upper go implementation, we just need to add 2 helper functions:
+\begin{lstlisting}
+// Check if all *other* processes have advanced to later logical times // Check whether the current process has the lock     
+func (state *LamportLockState) allProcessesSeen(time int) bool {       func (state *LamportLockState) haveLock() bool {     
+	for p := range state.seen {                                 	// peek at the head of the queue                           
+		if p != state.proc {                                  	state.lock.Lock()                       
+			if state.seen[p] < time {                     	if state.reqs.Len() > 0 {                             
+				return false                      	m := (*state.reqs)[0]        
+			}                                   		if m.Proc == state.proc {     
+		}                                   			if state.allProcessesSeen(m.Time) {
+	}                                  	                    	state.lock.Unlock() 
+	return true                        	                    	return true               
+}                                                      			}}}
+                                                               		state.lock.Unlock()
+                                                               		return false}
+\end{lstlisting}
+
+In function Aqcuire(), we just have to check whether it haveLock() to get the lock to prevent other process to enter the mutual exclusion.
+\subsection{We can use pyhical clock to implement Network Time Protocol}
+Assume that clocks $A$ and $B$ are stable and running at the same speed. Let $a=T_{1}-T_{3}$ and $b=T_{2}-T_{4}$. If the network delay difference from $A$ to $B$ and from $B$ to $A$, called differential delay, is small, the clock offset $\theta$ and roundtrip delay $\delta$ of $B$ relative to $A$ at time $T_{4}$ are approximately given by $\theta=\frac{a+b}{2}, \quad \delta=a-b$.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.3\linewidth]{ntp.png}
+  \caption{}
+\end{figure}
 
 \section{Weak Point of the paper}
 \subsection {No strongly software implementable module for programming} To ensure the parcial order, we have
@@ -268,12 +313,14 @@ We have problem that the system will halt if one process fails. Ti Generize,
 
 
 \section{Possible Refinement to the idea}
+\subsection {More efficient implementation for vector clock}
+
 
 \subsection {Better implementation for fault tolerance}
-Undo Logging
-Snapshotting
+In filesystems or databases, we have Redo/Undo Logging or Snapshotting for fault tolerance. In the paper, if one process in the disstributed system is down, the whole system is crash.
+
 2PL/MVCC
-% Go 四叉树
+
 \subsection{Better implementation for NTP protocol} Produces colored hyperlinks.\cite{HFT-PTP-NTP} %beter NTP portocol
 
 
