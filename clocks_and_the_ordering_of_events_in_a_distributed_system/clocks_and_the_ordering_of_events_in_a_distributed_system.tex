@@ -285,7 +285,7 @@ To ensure the partial order, we have multiple implementations based on the condi
 the author gives a more convincing example with scale time changing at one state machine and provides the testing results for their algorithm.
 Based on newly proposed systems like kafka \cite{Bench-kafka} or more recent paper \cite{kshemkalyani2020prime} using vector clock to store timestamp, we knew that the stability of vector clock is really good.
 \subsection{Limitations of the proposed clock}
-I've discussed Lamport clock's limitation and vector clock resolve it. As for vector clock, because we obtains the timestamp in random order, we lose the track of timestamp sequence.
+I've discussed the Lamport clock's limitation and vector clock resolves it. As for vector clock, because we obtain the timestamp in random order, we lose the track of timestamp sequence.
 \section{Possible Refinement to the idea}
 \subsection {More efficient implementation for vector clock}
 \subsubsection {Singhal-Kshemkalyani’s Differential Technique}
@@ -308,7 +308,7 @@ In High Frequency Trading Firm, we don't use NTP, rather, we use PTP. It is a pr
 Every PTP sequence involves a series of four messages between master and slave:
 \begin{itemize}
 \item The initial sync message from master to slave
-\item A followup sync message from master to slave
+\item A follow-up sync message from master to slave
 \item A delay request message from slave to master
 \item A final delay response message from master to slave
 \end{itemize}
