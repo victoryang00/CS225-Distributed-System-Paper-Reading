@@ -6,7 +6,7 @@
 # $Id: Makefile,v 1.10 2016/04/14 21:55:57 boris Exp $
 #
 
-PACKAGE=distributed_snapshots_determining_global_states_of_distributed_systems 
+PACKAGE=chord_a_scalable_peer_to_peer_lookup_servicefor_internet_applications 
 
 
 PDF = $(PACKAGE).pdf 

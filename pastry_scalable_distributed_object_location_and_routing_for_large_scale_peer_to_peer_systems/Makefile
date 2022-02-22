@@ -6,7 +6,7 @@
 # $Id: Makefile,v 1.10 2016/04/14 21:55:57 boris Exp $
 #
 
-PACKAGE=distributed_snapshots_determining_global_states_of_distributed_systems 
+PACKAGE=pastry_scalable_distributed_object_location_and_routing_for_large_scale_peer_to_peer_systems 
 
 
 PDF = $(PACKAGE).pdf 
