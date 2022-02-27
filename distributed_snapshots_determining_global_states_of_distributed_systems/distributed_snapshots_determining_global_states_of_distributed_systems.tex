@@ -120,8 +120,8 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-Many problems in distributed systems can be attributed to the problem of obtaining global states, e.g. stable property detection, where a stable property is immutable, e.g., a computation has stopped or completed (which does not recover itself), a system deadlock (which does not recover itself), and through global states, these stable properties can be detected.
-For a distributed system, we need to record the global state of the system at the same point in time, including the state of each process and the state of the associated channel (a computation is a graph consisting of a finite number of processes and channels composed graph). This is the problem that the distributed snapshot algorithm solves, because there is no global unified lock, so it is impossible to guarantee that all processes can record their state information at the same time.
+  Many problems \cite{chandy1985distributed} in distributed systems can be attributed to the problem of obtaining global states, e.g. stable property detection, where a stable property is immutable, e.g., a computation has stopped or completed (which does not recover itself), a system deadlock (which does not recover itself), and through global states, these stable properties can be detected.
+  For a distributed system, we need to record the global state of the system at the same point in time, including the state of each process and the state of the associated channel (a computation is a graph consisting of a finite number of processes and channels composed graph). This is the problem that the distributed snapshot algorithm solves, because there is no global unified lock, so it is impossible to guarantee that all processes can record their state information at the same time.
 \end{abstract}
 
 %%
@@ -159,13 +159,53 @@ For a distributed system, we need to record the global state of the system at th
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{}
+\keywords{Distributed System, Global State}
 
 
 %%
 %% This command processes the author and affiliation and title
 %% information and builds the first part of the formatted document.
 \maketitle
+
+\section{Strong Point of the paper}
+\subsection{The paper proposed Distributed snapshot algorithm}
+A distributed system contains a finite set of processes and a finite set of channels, which can be described by a directed graph (vertices represent processes, edges represent channels), as shown in the following figure.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.3\linewidth]{./distributed_graph.png}
+  \caption{Basic Model of Global State}
+\end{figure}
+\subsubsection{Two definitions}
+\begin{enumerate}
+  \item Channel: The article assumes that a channel has an infinite, zero-error, ordered buffer (and if not, whether the buffer is full), and that the delay of data in the channel is arbitrary and finite. The state of a channel is the msg list it has received upstream minus the msg list it has received downstream.
+  \item Process: It is defined by a set of states, an initial state and a set of events. an event e in process p represents an atomic operation that may change the state of p itself and the state of the corresponding channel c (which may change its state when sending or receiving data).
+\end{enumerate}
+The event is defined as $<p, s, s^{\prime}, M, c>$, where
+1. Process $\mathrm{p}$ is the place that event takes place;
+2. The state before $e$'s state $\mathrm{p}$ is $s$
+3. The state after $e$'s state $\mathrm{p}$ is $s^{\prime}$
+4. Channel c's state will be changed by $e$
+5. $M$ is the message send to or from $C$
+
+\subsection{Global State Definitions}
+With the previous model abstraction, here we can consider the global state of a distributed system as the set of process states and channel states. The initial global state is the set where each process is its corresponding initial state and each channel is the empty set.
+An event $e$ may change the global state (here $s$), and another function is defined here: next $(S, e)$, which refers to the global state after the event $e$ occurs in the global state $s$, and according to the previous description, the global state after $e$ is processed The state of $\mathrm{p}$ is changed from $\mathrm{s}$ to $\mathrm{s}^{\prime}$, and the state of Channel $\mathrm{c}$ is added (data is sent to Channel $c$) or removed (data is sent away from Channel $c$) $m s g M$.
+Here we define a $s e q=\left(e_{i}: 0 \leq i \leq n\right)$, which represents the sequence of events that will be processed by the distributed system, this seq is actually a computation of the system (this event sequence represents the distributed computation), assuming that before $e _{i}$ is processed, the global state of the system is $S_{i}$ (the initial state of the system is $S_{0}$), then the following equation can be obtained:
+$$
+S_{i+1}=\operatorname{next}\left(S_{i}, e_{i}\right), \text { for } 0 \leq i \leq n
+$$
+\subsection{Two Examples}
+\section {Weak Point of the paper}
+
+\section{Possible Refinement to the idea}
+\subsection {The paper is not easy to implement}
+The Chandy-Lamport algorithm describes a simple and straightforward but very effective distributed snapshot algorithm by abstracting the distributed system model. To discuss the Chandy-Lamport algorithm, it is important to note a few prerequisites of the algorithm: reliable network and orderly messages.
+
+Spark's \cite{zaharia2010spark} Structured Streaming does not disclose more details about the Chandy-Lamport algorithm used to do Failover processing, although it is disclosed in the official blog. In contrast, Flink published a paper in 2015 \cite{carbone2015lightweight} that is more suitable for engineering implementation and has been applied in the Flink project. The core idea is to insert a barrier on the input source side to replace the Marker in the Chandy-Lamport algorithm, and to control the synchronization of the barrier to achieve backup and exactly-once semantics of snapshots. If you have read the Spark Streaming paper, one of the obvious questions about this area is how to handle stragglers (nodes that run significantly slower than other nodes in a distributed system), and the answer is that they cannot be handled.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{distributed_snapshots_determining_global_states_of_distributed_systems}
 
 
 \end{document}
