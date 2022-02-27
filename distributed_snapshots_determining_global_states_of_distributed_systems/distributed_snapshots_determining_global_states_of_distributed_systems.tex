@@ -37,12 +37,23 @@
 %% The first command in your LaTeX source must be the \documentclass command.
 \documentclass[acmlarge]{acmart}
 
+\usepackage{tikz}
+\usetikzlibrary{automata,positioning}
+\tikzset{
+    state/.style={
+           rectangle,
+           rounded corners,
+           draw=black, very thick,
+           minimum height=2em,
+           inner sep=2pt,
+           text centered,
+           },
+}
 %%ss[STYLE]{acmart}
 %% \BibTeX command to typeset BibTeX logo in the docs
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
     \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
-
 %% Rights management information.  This information is sent to you
 %% when you complete the rights form.  These commands have SAMPLE
 %% values in them; it is your responsibility as an author to replace
@@ -196,8 +207,74 @@ $$
 S_{i+1}=\operatorname{next}\left(S_{i}, e_{i}\right), \text { for } 0 \leq i \leq n
 $$
 \subsection{Two Examples}
-\section {Weak Point of the paper}
+\subsubsection{Single-token Conservation}
+In this system, there is a token that is transferred between two processes, and each process has two states: $s_0$ and $s_1$. If the process does not contain a token, its state is $s_0$, and if it contains a token, its state is $s_1$. p has an initial state of $s_1$ and q has an initial state of $s_1$. q's initial state is $s_0$. For each process, there are two types of event (here is an example to understand the previous concept of event, as shown in the diagram above).
 
+When sending a token, the process state changes from $s_1$ to $s_0$.
+When receiving a token, the process state changes from $s_0$ to $s_1$.
+For the global state, there are four different possible states, as shown in the figure below.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{./single-token.png}
+  \caption{Global states and transitions of the single-token conservation system.}
+\end{figure}
+\subsubsection{Non-deterministic computation}
+For example, if two events, p sending M and q sending M', occur at the same time (the following is the case where these two events occur at the same time, as shown in the global state $S_2$ below), the resulting global state will be different from the expected one. The following diagram shows a possible global state transfer for this system.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.4\linewidth]{./non-deterministic-comutation.png}
+  \caption{Example for Non-deterministic computation}
+\end{figure}
+\subsubsection{Chandy-Lamport algorithm}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{./chandy-lamport.png}
+  \caption{Chandy-Lamport algorithm}
+\end{figure}
+\begin{enumerate}
+  \item initiating a snapshot: a manager process (which is any of the processes) initiates a snapshot.
+  \item manager process records process snapshot: the manager process starts recording its own local state (not including the state of the input channel), and after recording the local state, sends a marker to all downstream channels.
+  \item manager process records channel snapshot: after the manager process takes its own snapshot, it records all input messages for each input channel until the marker message arrives, and then uses all messages during this period as a snapshot of this input channel.
+  \item other processes record process snapshot: process starts recording process snapshot after it receives the first marker of all input channels upstream
+  \item Other processes record channel snapshot: after the process takes its own snapshot, it records all the input messages for each input channel until the marker message arrives, and then takes all the messages during this period as the snapshot of this input channel (note that since this process has a input channel has already arrived, one of the input channel states recorded by this process will be empty).
+  \item Terminate snapshot: After all processes have finished the local snapshot and channel snapshot, they send the finished message to the manager process, and after the manager process receives the message that all processes have finished the snapshot, the global consistency snapshot is finished.
+  
+\end{enumerate}
+\section {Weak Point of the paper}
+\subsection{The algorithm did not use vector clock algorithm}
+Because at the time paper was proposed, the vector clock is not yet published, it was not used. By vector clock, the causal time will maintain the reverse property.
+\subsection{The algorithm is the subset of Global Consistency Snapshot in flink \cite{carbone2015apache}}
+It follows the following relationship:
+\begin{center}\begin{tikzpicture}
+  \node[state] (I0) { 
+    \parbox{2cm}{Distributed Application Global Consistency Snapshot Algorithm
+    When the process is done with the local state and the input channel state, the input channel state will satisfy $n=n^{\prime} \geq m=$ $m^{\prime}$}
+  };
+
+  \node[state, right of=I0, node distance=4cm] (I2){
+    \parbox{2cm}{Chandy-Lamport Algorithm
+    process is done with the local state
+    and input channel state
+    when it receives the first marker
+    of input channel satisfies $n$ $=\mathrm{n}^{\prime}=\mathrm{m}=\mathrm{m}^{\prime}$; the rest of
+    input channel meets $\mathrm{n}=$
+    $\mathrm{n}^{\prime} \geq \mathrm{m}=\mathrm{m}^{\prime}$}
+  };		
+  \node[state, right of=I2, node distance=4cm] (I1) { 
+    \parbox{2cm}{flink Global Consistency Snapshot Counting
+    method
+    process is done with the local state
+    and input channel state
+    when $n=n^{\prime}=m=m^{\prime}$}
+  };
+
+  \path[->]
+  (I0) 	edge 					node[above]{Special Case} (I2)
+  (I2) 	edge 				 	node[above]{Special Case} (I1);
+
+  
+\end{tikzpicture}\end{center}
 \section{Possible Refinement to the idea}
 \subsection {The paper is not easy to implement}
 The Chandy-Lamport algorithm describes a simple and straightforward but very effective distributed snapshot algorithm by abstracting the distributed system model. To discuss the Chandy-Lamport algorithm, it is important to note a few prerequisites of the algorithm: reliable network and orderly messages.
