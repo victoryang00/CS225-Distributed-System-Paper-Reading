@@ -35,7 +35,7 @@
 %%
 %%
 %% The first command in your LaTeX source must be the \documentclass command.
-\documentclass[acmlarge]{acmart}
+\documentclass[acmtog]{acmart}
 \usepackage{listings}
 \lstset{language=Go,
   basicstyle=\ttfamily\scriptsize,
@@ -125,7 +125,7 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-  
+The interaction between the kernel space and the user space is a good offload by sending some of the non confidential IO operation into the user space. The shared worker can scale all the CPU loads to fetch data from the SSDs or Persistent Memory to store them in an unified buffer, once all the scheduled worker finished the operation, the blocked kernel thread will continue to do the operation unique to kernel space permission. This paper will implement the idea and try to scale the operation into a distributed file system that the data is distributed in multi nodes connected with RDMA+PMEM. The writing data will be user space worker distributing data into different nodes and the reading data will be user space worker fetching data from the distributed file system. Since the lock and balance between fetching from the remote nodes can be found to make full use of the bandwidth of NIC and PCIe lane. The scability of the filesystem can be reached.
 \end{abstract}
 
 %%
@@ -154,6 +154,57 @@
 %% This command processes the author and affiliation and title
 %% information and builds the first part of the formatted document.
 \maketitle
+
+\section{Introduction}
+As you can also see from the title, this paper is about PM-aware file systems. Currently, after the commercialization of Intel AEP, many teams have started to study the design of applications based on real NVDIMM platforms. The same idea as many previous articles. For example, SplitFS, ZoFS, proposes a hybrid architecture of kernel-state file system and user-state file system collaboration. Since kernel-state file system and user-state file system have their own strengths and weaknesses, it is crucial to enable them to collaborate with each other and take advantage of their strengths. This paper also explores this issue, but at the same time ensures that the architecture has good scalability.
+
+\begin{enumerate}
+
+\item  Currently about PM-aware file systems and other scalability is not good, in the kernel state file system will be limited by VFS, for example in NOVA, when updating files, VFS will put a lock on the upper directory. In user-state file systems, such as in Aerie and Strata, both need to interact with a centralized component, which becomes a bottleneck for scaling.
+\item The software overhead is too high for a low-latency memory-level device like PM. For example, kernel-state file systems have system call and VFS call overheads, the
+\item There are problems such as stray writes, but PM is persistent and once an error occurs, it is still stored in PM even after reboot.
+\end{enumerate}
+
+
+\section{Proposed approaches}
+I would first implement the single thread KucoFS and make the worker node distributed to remote node for file writes and reads. Then I will tune the performance for the worker loads.
+\subsection{Overall Overall design}
+
+
+Adopting Collaborative indexing, which offloads the pathname traversal task to Ulib, encapsulates the relevant information into the request after completion and sends it to Kfs, which directly uses the relevant path addresses to perform metadata adjustment.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=5cm]{./lib.png}
+\end{figure}
+Two-level locking manages concurrent writes, reducing frequent calls by Kfs during concurrency control and improving scalability; a lease mechanism is used between different processes, and only the process holding the lease can perform write operations. In addition, a userspace range lock is used between different threads of the same process, so that multiple threads can write concurrently to a file.
+
+For data security reasons, such as solving the stray writes problem, the PM space is mapped to the user space in a read-only mode. kuco uses the Three-Phase Write mechanism to implement user space writes in a read-only model (before ulib writes, kfs adjusts the write permissions in the page table, which can be seen due to the interaction between ulib and kfs). (it can be seen that since the interaction between ulib and kfs can become a bottleneck, Kfs uses pre-allocation to allocate more pages for ulib at a time). In addition, Kuco uses the COW method for writing data during write operations.
+Due to the COW write method, there will be old and new versions, Kuco uses Versioned Read mechanism to perform read operations in user space, by adding version identification bits in data block mappings, it can guarantee consistent reads without locking, using multiple version mechanism.
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=5cm]{./map.png}
+  \caption{The mapping between user space and kernel space}
+\end{figure}
+\subsection{Data Layout}
+Data Layout
+KucoFS implements a hybrid architecture of DRAM+PM
+
+The inode table is maintained in DRAM, which stores pointers to inodes, where the first pointer in the table points to the root node of the current partition tree, and Ulib finds files in user space based on the inode table. The Block mapping mentioned above is also in DRAM.
+The PM is maintained by Operaton log, which guarantees atomic recovery of metadata. There are also data page and metapage, which are managed in 4K.
+
+Crash Consistency and Recovery
+Guarantees metadata consistency through strictly ordered updates.
+Data pages are updated using the COW mechanism, followed by writing logs to ensure data consistency.
+Checkpoint mechanism completes log cleaning operation and instant recovery.
+
+\section{Related work}
+The paper called \textit{Gekko FS}, a distributed filesytem that mainly focus on the bandwidth of the read/write. It was to fully utilize the bandwidth of the NIC. Each node have a server daemon and client, and use fast RPC to fetch data to the filesystem. Since the Router can transmit the data from the client to the server with full speed with a good distributor, the scability is linear. Tsinghua University applied the idea of \textit{Gekko FS} and wrote a FS called \textit{MadFS} that top the IO500 board. This bandwidth utilization in their design can be refered to design my user space worker.
+
+The paper published on FAST21, called \textit{Scalable Persistent Memory File System with Kernel-Userspace Collaboration} \cite{chen2021scalable}. This paper presents Kuco, a collaborative user-state and kernel-state file system, with fine-grained task division between the two, minimizing the overhead of the kernel state and providing good scalability.
+
+The UCSC initiated project called \textit{Ceph} which introduced a lot of novel features to the world of distributed filesystems better than \textit{Lustre} and \textit{BeeGFS}, like Consistent Hashing and replication. The backend worker of \textit{Distributed KucoFS} can refer to these designs
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{perfScope_practical_online_server_performance_bug_inference_in_production_cloud_computing_infrastructures}
