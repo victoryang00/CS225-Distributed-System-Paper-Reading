@@ -125,7 +125,11 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
+The service level objectives are are the targeted levels of service, measured by availability, latency, throughput. They are typically expressed as a percentage over a period of time. The violation of it may cause the expensive fault tolerance.
 
+The paper \cite{cohen2005capturing} outlines methods for extracting signatures from a system in order to determine whether a given system state is comparable to a previously observed state. This helps owners to better diagnose problems by drawing parallels between different system states and different sites of the same distributed system.
+
+The study accomplishes this by combining system merit measurements (such as average transaction time) with low-level metrics such as CPU utilization to group seemingly unrelated instances together and provide a "syndrome" of problems.
 \end{abstract}
 
 %%
@@ -136,18 +140,18 @@
   <ccs2012>
   <concept>
   <concept_id>10010520.10010553.10010562</concept_id>
-  <concept_desc>Distributed System~Peer to Peer System</concept_desc>
+  <concept_desc>SLO Network</concept_desc>
   <concept_significance>500</concept_significance>
   </concept>
   </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Distributed System~Distributed Hash Table}
+\ccsdesc[500]{Bayesian Networks}
 
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{}
+\keywords{Service Level Object, Bayesian Networks}
 
 
 %%
@@ -155,11 +159,38 @@
 %% information and builds the first part of the formatted document.
 \maketitle
 \section{Strong point of the document}
+\subsection{Capturing System State and grouping SLO by TAN}
+Using bayesian network with the attributable metrics comparing the resulting probabilistic model for metric mi under violations with represent a probabilistic model for the same metric under an SLO state of compliance.
+
+\subsection{Clustering signature uses $L_{1}$ norms k-median and $L_{2}$ norm k-means to group SLO violation}
+The distance metric is measured by both $L_{1}$ and $L_{2}$ norms. The exceeding of thresholds may leads to the violation of SLO.
+\subsection{Use a subset of models from an ensemble to store the historical SLO state}
+The method is better for clustering normal and abnormal cases in machines.
+\subsection{The FT system can easily characterize DB/APP contention across different datacenters}
+\begin{figure}
+  \centering
+  \includegraphics[width=10cm]{./app_provider.png}
+  \end{figure}
 
 \section{Weak point of the document}
+\subsection{Metric Attribution and Ensembles Accuracy are not well discussed as in \cite{zhang2005ensembles}}
+In this paper, all the different metrics are cross-validated for their contribution to ensemble accuracy using the following algorithm:
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=8cm]{./cross_validate.png}
+\end{figure}
+\subsection{The metrics are not able to get the root of cause}
+Whether the root of cause is memory leakage or network shutdown is not possible collected by pure observation.(with machine learning tools, it can be done now with fully automated tool). More expert enhanced knowledge is required to trigger a faulty state cause.
+\subsection{Clustering Algorithm may cause no meaningful or too generic ensemble}
+The $L_{1/2}$ norm algorithm is good for distinct normal/abnormal states, but not able to embed root causing knowledge to the state.
 \section{Possible Refinement to the idea}
-
+\subsection{Give a more detailed data illustration and mining to the SLO for root cause investigation\cite{wang2018cloudranger}}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=8cm]{./cloudranger.png}
+\end{figure}
+In CloudRanger, it has the trace of the impact graph, it is to describe the impact relation between service sets, which is better for finding root of cause.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{capturing_indexing_clustering_and_retrieving_system_history}
 \end{document}
