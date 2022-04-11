@@ -93,7 +93,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Paper Reading of \textit{Chord: A Scalable Peer-to-peer Lookup Service for Internet Applications}}
+\title{Paper Reading of \textit{TensorFlow: A System for Large-Scale Machine Learning}}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -125,7 +125,14 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-  Chord \cite{stoica2003chord}, first proposed by Berkeley Prof. Ion Stoica, is a peer-to-peer distributed hash table mechanism and technique in computing. A distributed hash table maintains key-value pairs by allocating keys to different computers (known as "nodes"); each node will store the values for all of the keys it is responsible for. Chord describes how nodes are assigned keys and how a node can find the value for a particular key by first locating the node accountable for that key.
+Because its predecessor, DistBelief, was too rigid for various types of ML work Large-scale training, small-scale service, and research are the three categories of ML work. DistBelief was fast for large-scale training, but if you want to scale down your training to run in a tiny environment with a small dataset or conduct research with new layers, you'll need to update the C++ code.
+
+So Tensorflow \cite{abadi2016tensorflow} has Parameter servers are distributed key-value stores that keep track of the status of model parameters. Moreover, Workers read data from disk, execute mathematical computations, and update model parameters using parameter servers to drive the training process. These workers are usually powered by a high-performance CPU or GPU.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=10cm]{./workers.png}
+  \caption{Workers fetch parameters w and push gradients $\delta$w to parameter servers.}
+\end{figure}
 \end{abstract}
 
 %%
@@ -147,8 +154,7 @@
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{}
-
+\keywords{Tensor computation, parameter propogation}
 
 %%
 %% This command processes the author and affiliation and title
@@ -156,138 +162,38 @@
 \maketitle
 \section{Strong point of the document}
 
-\subsection{The paper introduced another DHT}
-Consistent hashing is used to assign a m-bit identification to nodes and keys. For consistent hashing, the SHA-1 algorithm is used as the basis hashing function. Because both keys and nodes (in reality, their IP addresses) are equally distributed in the same identifier space with a small chance of collision, consistent hashing is critical to Chord's robustness and efficiency. As a result, nodes can join and depart the network without causing any interruption. The term node is used in the protocol to refer to both a node and its identification (ID) without ambiguity. The phrase "key" is the same way.
-
-Nodes and keys are arranged in an identifier circle using the Chord lookup protocol, with a maximum of $2^m$ nodes, ranging from 0 to $2^{m-1}-2^m - 1$. ( m should be large enough to avoid colliding with other elements.) Some of these nodes will be associated with machines or keys, while the majority will be vacant.
-
-There is a successor and a predecessor for each node. In a clockwise manner, the successor to a node is the next node in the identifier circle. The predecessor rotates in the other direction. If there is a node for each conceivable ID, node 1 is its successor, and node $2^{m-1}-2^m - 1$ is its predecessor; nevertheless, there are usually "holes" in the sequence.
-\subsection{Implementation Detail}
-
+\subsection{Effectiveness of combining parameters communication and labour server utilization}
+There is no differentiation between a parameter server process and a worker process in TensorFlow. The implementation is the same for all processes. A stateful or stateless process can exist. Stateful ones, which act like parameter servers, feature a mutable buffer to hold model parameters. Stateless individuals can concentrate on crunching numbers and communicating with stateful individuals to get and set those parameters, effectively acting as laborers.
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.4\columnwidth]{./DI.png}
-  \caption{Chord Example}
+  \includegraphics[width=5cm]{./workers.png}
 \end{figure}
-
-\subsubsection{Basic query}
-The Chord protocol's main purpose is to find successors by querying a key from a client (usually a node) (k). If a node can't discover the key locally, the fundamental technique is to forward the query to the node's successor. The query time will be O(N), where N is the number of machines in the ring.
-
-To avoid the linear search described above, Chord uses a quicker search approach that requires each node to maintain a finger table with up to m entries, where m is the number of bits in the hash key. The $ith$ entry of node n will have the value successor($(n+2^{i-1})\,\bmod\,2^m$). The node's immediate successor is the first element in the finger table (and therefore an extra successor field is not needed). When a node wants to look for a key k, it sends the query to the closest successor or predecessor (depending on the finger table) of k in its finger table (the "biggest" on the circle whose ID is smaller than k) until it discovers the key is stored in its immediate successor.
-\subsubsection{Finger table}
-In an N-node network, the number of nodes that must be reached to discover a successor using such a finger table is O (log N).
-\subsubsection{Node join}
-Whenever a new node joins, three invariants should be maintained (the first two ensure correctness and the last one keeps querying fast):
+A tensor is a multi-dimensional array. Tensors flow along edges in a dataflow graph where vertices are operations.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=5cm]{./tensor.png}
+\end{figure}
+\subsection{Multiple Language Backends for Graph Computation}
+For efficiency, the TensorFlow runtime is written in C++. Python, Go, Java, C++, and other languages can be used for user-level code. Programmers create a graph, designate the node(s) for which they want a value (fetch), and supply input data. The following is what the TensorFlow runtime does with the graph.
 \begin{enumerate}
-  \item The successor of each node appropriately points to its immediate successor.
-  \item Each key is kept in its own vehicle. successor(k).
-  \item The finger table for each node should be correct.
+\item Partial execution graph pruning: TensorFlow examines the graph and only performs the calculations required to compute the fetch.
+\item A TensorFlow workflow can have several subgraphs running at the same time. Some subgraphs are run in parallel, such as concurrent preprocessing, which modifies incoming data independently. Concurrent subgraphs such as concurrent training, where parameters are changed based on various input batches, interact through shared variables and queues.
+\item TensorFlow's runtime distributes actions across different devices. Computationally intensive operations are performed on GPUs by default, while stateful bookkeeping functions are placed on CPUs. Users have the ability to customize their own placement. The problem of determining the best device location automatically is still under investigation. On each edge that traverses devices, the TensorFlow runtime inserts a communication channel.
 \end{enumerate}
-A predecessor field is maintained for each node to meet these invariants. We no longer need to keep this field separate because the successor is the first entry of the finger table. For a newly joined node n, the following tasks should be completed:
-\begin{enumerate}
-  \item Node n should be initialized (the predecessor and the finger table).
-  \item Notify other nodes that their predecessors and finger tables need to be updated.
-  \item The new node inherits its successor's responsible keys.
-\end{enumerate}
-The predecessor of n can readily be found by looking at the predecessor of successor(n) (in the previous circle). There are numerous initialization ways for its finger table. The simplest method is to run find successor queries for all m entries, which will ensure that the $ith$ entry in the finger table is still correct for the $(i+1)th$ entry. This results in O($log2$N). The optimal technique is to update the finger table and initialize it from its immediate neighbors, which is O(log N).
-
-\subsection{Stabilization}
-
-All successor pointers \cite{gummadi2003impact} must be current to ensure correct lookups. As a result, a background stabilization procedure updates finger tables and successor pointers on a regular basis.
-\begin{enumerate}
-  \item \texttt{Stabilize()}: n requests its predecessor p from its successor and determines whether p should be n's successor instead (this is the case if p recently joined the system).
-  \item \texttt{Notify()}: informs n's successor of its existence, allowing it to change n's predecessor.
-  \item \texttt{Fix\_fingers()}: updates finger tables
-\end{enumerate}
-\subsection{The paper have a proof of Complexity and communication cost}
-With high probability, can be resolved by contacting O(log N) nodes, where N is the number of nodes in the network.
-
-Suppose node $n$ wishes to find the successor of key $k$. Let $p$ be the predecessor of $k$. We wish to find an upper bound for the number of steps it takes for a message to be routed from $n$ to $p$. Node $n$ will examine its finger table and route the request to the closest predecessor of $k$ that it has. Call this node $f$. If $f$ is the $i^{t h}$ entry in $n$ 's finger table, then both $f$ and $p$ are at distances between $2^{i-1}$ and $2^{2}$ from $n$ along the identifier circle. Hence, the distance between $f$ and $p$ along this circle is at
-most $2^{i-1}$. Thus the distance from $f$ to $p$ is less than the distance from $n$ to $f$ : the new distance to $p$ is at most half the initial distance. steps for a message to traverse this remaining distance. The total expected routing time is thus $O(\log N)$.
-Simply, the probability that all $r$ nodes fail is $\left(\frac{1}{4}\right)^{r}=O\left(\frac{1}{N}\right)$, which is a low probability; so with high probability at least one of them is alive and the node will have the correct pointer.
-
-\subsection{Chord DHT have many industrial usage}
-\begin{enumerate}
-  \item Cooperative Mirroring is a load balancing strategy in which a local network hosts information that is accessible to computers on the internet. This approach could allow developers to distribute the load among multiple computers rather than a single server, ensuring that their product is always available.
-  \item Distributed Indices: Retrieval of files from a searchable database over the network. P2P file transfer clients, for example.
-  \item Time-shared storage: When a computer joins a network, its available data is dispersed throughout the network so that it can be retrieved when the computer disconnects. When a computer is no longer connected to the network, data from other computers is transmitted to the computer in question for offline recovery. Specifically for nodes that are unable to connect to the network on a continuous basis.
-  \item Christian Radke: Chord's pessimistic failover strategy whereas in mobile ad hoc networks replicate transmission seems more useful.
-\end{enumerate}
+\begin{figure}[htbp]
+  \centering
+  \caption{A dataflow graph is divided into sections and spread across multiple devices. A GPU is used for processes that need a lot of math. On a CPU, stateful bookkeeping operations are performed. TensorFlow runtime inserts a send-receive channel whenever an edge passes between devices.}
+  \includegraphics[width=5cm]{./gpu.png}
+\end{figure}
+\subsection{Dynamic Control Flow in TensorFlow}
+Conditional and iterative control flows are used in several sophisticated machine learning methods (e.g., recurrent neural networks and reinforcement learning). The goal of dynamic control flow in a machine learning framework is to provide conditionals and loops through a TensorFlow interface (in-graph control flow). Programmers must rely on user-level language conditional and loop constructions in the absence of in-graph control flow (out-of-graph control flow). TensorFlow defines control-flow primitives (e.g. switch, merge, nextIteration) to express conditional and loop constructs. As a result, conditionals and loops can be represented graphically. In-graph control flow allows TensorFlow to process and optimize a single unified graph, thus allowing more parallelism and distribution.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=5cm]{./primitive.png}
+\end{figure}
 \section{Weak point of the document}
-
-We'll not talk about the drawback of DHT here. Despite Chord have advantages like churn rates and low packet loss rate over Pastry \cite{rowstron2001pastry}, it has following drawbacks.
-\subsection{Flooding queries}
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.3\columnwidth]{./flood.png}
-  \caption{Flood Query latency of Chord \cite{lua2005survey}}
-\end{figure}
-
-Flooding queries may cause substantial overhead, which means the system's tail latency is pretty high.
-\subsubsection{No guarantee of response}
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\columnwidth]{./gnutella.png}
-  \caption{Overview of Gnutella \cite{cmu}}
-\end{figure}
-
-We may not have bounded time for response just like the example in Gnutella.
-\begin{enumerate}
-  \item Ad-hoc topology
-  \item Queries are flooded for bounded number of hops
-  \item No guarantees on recall
-\end{enumerate}
-
-\subsection{Relatively high route selection}
-Here's a comparison of the different DHT system.\\
-\begin{tabular}{|c|c|c|c|c|}
-  \hline Geometry  & Algorithm & Neighbor Selection                   & Route Selection (log(N) hops)       & Route Selection (> log(N) hops)       \\
-  \hline Tree      & Plaxton   & $N^{\log (N) / 2}$                   & 1                                   & 0                                     \\
-  \hline Hypercube & CAN       & 1                                    & $c_{1}(\log (\mathrm{N}))$          & 0                                     \\
-  \hline Butterfly & Viceroy   & 1                                    & 1                                   & 0                                     \\
-  \hline Hybrid    & Tapestry, & $N^{\log (N) / 2}$                   & 1                                   & $c_{2}(\log (\mathrm{N}))$            \\
-  \hline Xastry    & Kademila  & $N^{\log (N) / 2}$                   & 1                                   & $\mathrm{c}_{2}(\log (\mathrm{N}))$   \\
-  \hline Ring      & Chord     & $\mathrm{N}^{\log (\mathrm{N}) / 2}$ & $\mathrm{c}_{1}(\log (\mathrm{N}))$ & $2 \mathrm{c}_{2}(\log (\mathrm{N}))$ \\
-  \hline
-\end{tabular}
-\section{Possible Refinement to the idea}
-\subsection{Minimized the complexity of implementation \texttt{find\_successor}}
-The most difficult operation you must support is a complete find successor lookup, which may require numerous servers to be contacted. It should begin by seeing if the result is available locally. If it doesn't, it'll go into a loop. It calls a single server in each iteration and requests the result. The server either returns the result or the forwarding address of the next node to be contacted. 
-
-Just in case, set a hard restriction on the number of requests a single lookup can produce. Create a global, named constant for this. For hundreds of nodes, 32 should suffice.
-
-\begin{lstlisting}
-  // ask node n to find the successor of id
-  // or a better node to continue the search with
-  n.find_successor(id)
-      if (id in (n, successor])
-          return true, successor;
-      else
-          return false, closest_preceding_node(id);
-
-  // search the local table for the highest predecessor of id
-  n.closest_preceding_node(id)
-      // skip this loop if you do not have finger tables implemented yet
-      for i = m downto 1
-          if (finger[i] in (n,id])
-              return finger[i];
-      return successor;
-
-  // find the successor of id
-  find(id, start)
-      found, nextNode = false, start;
-      i = 0
-      while not found and i < maxSteps
-          found, nextNode = nextNode.find_successor(id);
-          i += 1
-      if found
-          return nextNode;
-      else
-          report error;      
-  \end{lstlisting}
-
-\subsection{Memory and Network locality aware notify and find successor}
-In Kelips \cite{gupta2003kelips}, real time memory and network time is tested for find nearest locality for find\_successor for better performance.
+\subsection{}
+\section{Possible refinement}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{tensorFlow_a_system_for_large_scale_machine_learning}

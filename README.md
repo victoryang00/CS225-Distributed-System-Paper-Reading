@@ -10,4 +10,4 @@
 8. [TensorFlow: A System for Large-Scale Machine Learning](./tensorFlow_a_system_for_large_scale_machine_learning)
 9. [CloudScale: Elastic Resource Scaling for Multi-Tenant Cloud Systems](./cloudScale_elastic_resource_scaling_for_multi_tenant_cloud_systems)
 10. [Hoplite: Efficient and Fault-Tolerant Collective Communication for Task-Based Distributed Systems](./hoplite_efficient_and_fault_tolerant_collective_communication_for_task_based_distributed_systems)
-11. [Project proposal](./project_proposal)
+11. [Project Proposal](./project_proposal)

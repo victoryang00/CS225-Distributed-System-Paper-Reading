@@ -6,7 +6,7 @@
 # $Id: Makefile,v 1.10 2016/04/14 21:55:57 boris Exp $
 #
 
-PACKAGE=chord_a_scalable_peer_to_peer_lookup_servicefor_internet_applications 
+PACKAGE=tensorFlow_a_system_for_large_scale_machine_learning 
 
 
 PDF = $(PACKAGE).pdf 
