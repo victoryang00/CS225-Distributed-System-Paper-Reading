@@ -173,6 +173,7 @@ A tensor is a multi-dimensional array. Tensors flow along edges in a dataflow gr
   \centering
   \includegraphics[width=5cm]{./tensor.png}
 \end{figure}
+
 \subsection{Multiple Language Backends for Graph Computation}
 For efficiency, the TensorFlow runtime is written in C++. Python, Go, Java, C++, and other languages can be used for user-level code. Programmers create a graph, designate the node(s) for which they want a value (fetch), and supply input data. The following is what the TensorFlow runtime does with the graph.
 \begin{enumerate}
@@ -192,9 +193,26 @@ Conditional and iterative control flows are used in several sophisticated machin
   \includegraphics[width=5cm]{./primitive.png}
 \end{figure}
 \section{Weak point of the document}
-\subsection{}
+\subsection{The ecosystem of tensorflow is not as strong as pytorch}
+PyTorch is much easier to use (you can tell how unfriendly a framework itself is when it can derive many upper-level frameworks, speaking of TF), and the ecology is up, with most papers open-sourced with PyTorch. For PyTorch, If it is a computational graph for backpropagation, the gradient is calculated from the last node after you call backward, and then as soon as the inputs of an operator are ready, the operator is scheduled to execute\dots
+\subsection{The original implementation's synchronous replica coordination is not scalable}
+Some people have recently re-examined the idea that synchronous training isn't scaleable. Because GPUs enable training with hundreds rather than thousands of computers, synchronous training on the same platform may be faster (in terms of time to quality). Use queues to implement the synchronous version. A blocking queue ensures that all workers read the same parameter values, while a per-variable queue collects gradient updates from all workers and applies them atomically.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=5cm]{./replica.png}
+\end{figure}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=5cm]{./tensor.png}
+  \caption{Different execution flow.  Synchronous and Asynchronous}
+\end{figure}
 \section{Possible refinement}
-
+\subsection{The graph optimization can be based on a intermediate representation}
+After the appearance of TVM\cite{chen2018tvm}, we notice that with the growing of backend devices, we have to design a intermediate representation to represent the graph. The tensorflow has already a middle ware called MLIR(Multi Level Intermediate Representation) to generate code to
+\subsection{JIT compilations }
+Every time we may have consume a lot of time recompiling and deploying data. The Just in Time compilation can both utilize the runtime graph information for better Cuda kernel generation and faster compilation overall.
+\subsection{The communication between servers are based is non confidential}
+We can apply the federated learning method to better improve the data and parameter updates \cite{federated}. For example, we can apply encryption and decryption to the passing variables of asynchronous SGD which does not hurt the precision of data and parameter updates.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{tensorFlow_a_system_for_large_scale_machine_learning}
 \end{document}
