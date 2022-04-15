@@ -9,5 +9,4 @@
 7. [PerfScope: Practical Online Server Performance Bug Inference in Production Cloud Computing Infrastructures](./practical_online_server_performance_bug_inference_in_production_cloud_computing_infrastructures)
 8. [TensorFlow: A System for Large-Scale Machine Learning](./tensorFlow_a_system_for_large_scale_machine_learning)
 9. [CloudScale: Elastic Resource Scaling for Multi-Tenant Cloud Systems](./cloudScale_elastic_resource_scaling_for_multi_tenant_cloud_systems)
-10. [Hoplite: Efficient and Fault-Tolerant Collective Communication for Task-Based Distributed Systems](./hoplite_efficient_and_fault_tolerant_collective_communication_for_task_based_distributed_systems)
-11. [Project Proposal](./project_proposal)
+10. [Project Proposal](./project_proposal)

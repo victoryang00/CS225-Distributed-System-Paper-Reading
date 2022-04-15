@@ -1,6 +1,6 @@
 SUBDIRS := $(wildcard */.)
 
-all: cloudScale_elastic_resource_scaling_for_multi_tenant_cloud_systems
-cloudScale_elastic_resource_scaling_for_multi_tenant_cloud_systems:
+all: $(SUBDIRS)
+$(SUBDIRS):
 	$(MAKE) -C $@
-.PHONY: all cloudScale_elastic_resource_scaling_for_multi_tenant_cloud_systems
+.PHONY: all $(SUBDIRS)
